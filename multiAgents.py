@@ -1,15 +1,15 @@
 # multiAgents.py
 # --------------
-# Licensing Information:  You are free to use or extend these projects for 
-# educational purposes provided that (1) you do not distribute or publish 
-# solutions, (2) you retain this notice, and (3) you provide clear 
-# attribution to UC Berkeley, including a link to 
+# Licensing Information:  You are free to use or extend these projects for
+# educational purposes provided that (1) you do not distribute or publish
+# solutions, (2) you retain this notice, and (3) you provide clear
+# attribution to UC Berkeley, including a link to
 # http://inst.eecs.berkeley.edu/~cs188/pacman/pacman.html
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
-# The core projects and autograders were primarily created by John DeNero 
+# The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
-# Student side autograding was added by Brad Miller, Nick Hay, and 
+# Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
@@ -75,7 +75,51 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        penalty = 10.0
+        score = successorGameState.getScore()
+
+        min_distance_ghost = None
+        min_distance_food = None
+        infinito = -10000000
+        if action == 'Stop':
+            return infinito
+        elif successorGameState.isWin():
+            return 1000000
+
+        """
+            Search for the position of the  most near ghost in the ghosts list
+            and do the manhattan Distance with the position of the pacman with
+            the near ghost
+        """
+        for ghost in newGhostStates:
+            if ghost.getPosition() == tuple(list(newPos)):
+                if ghost.scaredTimer == 0:
+                    return infinito
+            distance_ghost = manhattanDistance(newPos, ghost.getPosition())
+            if min_distance_ghost == None:
+                min_distance_ghost = distance_ghost
+            else:
+                if min_distance_ghost < distance_ghost:
+                    min_distance_ghost = distance_ghost
+        """
+            Search the nearest food in the list of food and do the manhattanDistance
+            with the pacman position.
+        """
+        for food in newFood.asList():
+            distance_food = manhattanDistance(newPos, food)
+            if min_distance_food == None:
+                min_distance_food = distance_food
+            else:
+                if min_distance_food < distance_food:
+                    min_distance_food = distance_food
+
+        if score:
+            if min_distance_ghost:
+                score -= penalty / min_distance_ghost
+            if min_distance_food:
+                score += penalty / min_distance_food
+
+        return score
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -130,7 +174,42 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        #util.raiseNotDefined()
+
+        def minimax(gameState, agentIndex, depth, shouldBeMax):
+            if depth == 0 or gameState.isWin() or gameState.isLose():
+                return self.evaluationFunction(gameState)
+
+            moves = [action for action in gameState.getLegalActions(agentIndex) \
+                    if action != 'Stop']
+            if shouldBeMax:
+                alpha = -10000000
+                for action in moves:
+                    alpha = max(alpha, minimax(gameState.generateSuccessor(agentIndex \
+                     + 1, action), agentIndex + 1,depth -1, False))
+                return alpha
+            else:
+                beta = 10000000
+                for action in moves:
+                    beta = min(beta, minimax(gameState.generateSuccessor(\
+                     + 1, action), agentIndex + 1,depth -1, True))
+                return beta
+
+        moves = [action for action in gameState.getLegalActions() \
+                if action != 'Stop']
+
+        move = 'Stop'
+        best_value = None
+        for action in moves:
+            value = minimax(gameState, 0, self.depth, True)
+            if not best_value:
+                best_value = value
+            else:
+                if value > best_value:
+                    best_value = value
+                    move = action
+        return move
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -171,4 +250,3 @@ def betterEvaluationFunction(currentGameState):
 
 # Abbreviation
 better = betterEvaluationFunction
-
