@@ -178,15 +178,22 @@ class MinimaxAgent(MultiAgentSearchAgent):
         #util.raiseNotDefined()
 
         def maxValue(gameState, agentIndex, depth):
+            #if we don't find any move we just stop
             move = 'Stop'
+            #list of posibles moves
+            #self.index == 0 => pacman
             moves = gameState.getLegalActions(self.index)
+            #if depth >= 2 or there is no moves or the game is won we are done
+            #and we calculate the best move
             if depth >= self.depth or gameState.isWin() or not moves:
                 return self.evaluationFunction(gameState), Directions.STOP
             best_value = -1000000
             for action in moves:
+                #we get the succesor with the actual action
                 succesor = gameState.generateSuccessor(self.index, action)
+                #do the minValue with it
                 alpha, __ = minValue(succesor, agentIndex + 1, depth)
-
+                #if is higher than the actual vlaue we have we save it
                 if alpha > best_value:
                     best_value = alpha
                     move = action
@@ -200,11 +207,12 @@ class MinimaxAgent(MultiAgentSearchAgent):
             best_value = 1000000
             for action in moves:
                 succesor = gameState.generateSuccessor(agentIndex, action)
+                #if we reached the number max of agents we need to max our move
                 if agentIndex == gameState.getNumAgents() -1:
                     beta, __ = maxValue(succesor, self.index, depth +1)
                 else:
                     beta, __ = minValue(succesor, agentIndex + 1, depth)
-
+                #in this case we save the min value posible for each action
                 if beta < best_value:
                     best_value = beta
                     move = action
@@ -234,7 +242,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 if alpha > best_value:
                     best_value = alpha
                     move = action
-
+                #if the value found is bigger than the beta we can pruning the tree
                 if best_value > beta_pruning:
                     return best_value, move
 
@@ -257,7 +265,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 if beta < best_value:
                     best_value = beta
                     move = action
-
+                #if the value found is lower than the beta we can pruning the tree
                 if best_value < alpha_pruning:
                     return best_value, move
 
@@ -305,7 +313,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                     beta, __ = maxValue(succesor, self.index, depth +1)
                 else:
                     beta, __ = minValue(succesor, agentIndex + 1, depth)
-
+                #the ghost don't try to win and it is just one more obstacle of the game
                 cost.append(beta)
             return sum(cost)/float(len(cost)), None
         return maxValue(gameState, self.index, 0)[1]
