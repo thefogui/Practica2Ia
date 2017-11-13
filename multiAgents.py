@@ -186,13 +186,10 @@ class MinimaxAgent(MultiAgentSearchAgent):
             for action in moves:
                 succesor = gameState.generateSuccessor(self.index, action)
                 alpha, __ = minValue(succesor, agentIndex + 1, depth)
-                if not best_value:
+
+                if alpha > best_value:
                     best_value = alpha
                     move = action
-                else:
-                    if alpha > best_value:
-                        best_value = alpha
-                        move = action
             return best_value, move
 
         def minValue(gameState, agentIndex, depth):
@@ -224,7 +221,49 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def maxValue(gameState, agentIndex, depth, alpha_pruning, beta_pruning):
+            move = 'Stop'
+            moves = gameState.getLegalActions(self.index)
+            if depth >= self.depth or gameState.isWin() or not moves:
+                return self.evaluationFunction(gameState), Directions.STOP
+            best_value = -100000
+            for action in moves:
+                succesor = gameState.generateSuccessor(self.index, action)
+                alpha, __ = minValue(succesor, agentIndex + 1, depth, alpha_pruning, beta_pruning)
+
+                if alpha > best_value:
+                    best_value = alpha
+                    move = action
+
+                if best_value > beta_pruning:
+                    return best_value, move
+
+                alpha_pruning = max(alpha_pruning, best_value)
+            return best_value, move
+
+        def minValue(gameState, agentIndex, depth, alpha_pruning, beta_pruning):
+            move = 'Stop'
+            moves = gameState.getLegalActions(agentIndex)
+            if depth >= self.depth or gameState.isLose() or not moves:
+                return self.evaluationFunction(gameState), Directions.STOP
+            best_value = 100000
+            for action in moves:
+                succesor = gameState.generateSuccessor(agentIndex, action)
+                if agentIndex == gameState.getNumAgents() -1:
+                    beta, __ = maxValue(succesor, self.index, depth +1, alpha_pruning, beta_pruning)
+                else:
+                    beta, __ = minValue(succesor, agentIndex + 1, depth,alpha_pruning, beta_pruning)
+
+                if beta < best_value:
+                    best_value = beta
+                    move = action
+
+                if best_value < alpha_pruning:
+                    return best_value, move
+
+                beta_pruning = min(beta_pruning, best_value)
+            return best_value, move
+        return maxValue(gameState, self.index, 0, -1000000, 1000000)[1]
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -239,7 +278,39 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def maxValue(gameState, agentIndex, depth):
+            move = 'Stop'
+            moves = gameState.getLegalActions(self.index)
+            if depth >= self.depth or gameState.isWin() or not moves:
+                return self.evaluationFunction(gameState), Directions.STOP
+            best_value = -1000000
+            for action in moves:
+                succesor = gameState.generateSuccessor(self.index, action)
+                alpha, __ = minValue(succesor, agentIndex + 1, depth)
+
+                if alpha > best_value:
+                    best_value = alpha
+                    move = action
+            return best_value, move
+
+        def minValue(gameState, agentIndex, depth):
+            move = 'Stop'
+            moves = gameState.getLegalActions(agentIndex)
+            if depth >= self.depth or gameState.isLose() or not moves:
+                return self.evaluationFunction(gameState), Directions.STOP
+            best_value = 1000000
+            for action in moves:
+                succesor = gameState.generateSuccessor(agentIndex, action)
+                if agentIndex == gameState.getNumAgents() -1:
+                    beta, __ = maxValue(succesor, self.index, depth +1)
+                else:
+                    beta, __ = minValue(succesor, agentIndex + 1, depth)
+
+                if beta < best_value:
+                    best_value = beta
+                    move = action
+            return best_value, move
+        return maxValue(gameState, self.index, 0)[1]
 
 def betterEvaluationFunction(currentGameState):
     """
