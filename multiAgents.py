@@ -177,39 +177,42 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
         #util.raiseNotDefined()
 
-        def minimax(gameState, agentIndex, depth, shouldBeMax):
-            if depth == 0 or gameState.isWin() or gameState.isLose():
-                return self.evaluationFunction(gameState)
-
-            moves = [action for action in gameState.getLegalActions(agentIndex) \
-                    if action != 'Stop']
-            if shouldBeMax:
-                alpha = -10000000
-                for action in moves:
-                    alpha = max(alpha, minimax(gameState.generateSuccessor(agentIndex \
-                     + 1, action), agentIndex + 1,depth -1, False))
-                return alpha
-            else:
-                beta = 10000000
-                for action in moves:
-                    beta = min(beta, minimax(gameState.generateSuccessor(\
-                     + 1, action), agentIndex + 1,depth -1, True))
-                return beta
-
-        moves = [action for action in gameState.getLegalActions() \
-                if action != 'Stop']
-
-        move = 'Stop'
-        best_value = None
-        for action in moves:
-            value = minimax(gameState, 0, self.depth, True)
-            if not best_value:
-                best_value = value
-            else:
-                if value > best_value:
-                    best_value = value
+        def maxValue(gameState, agentIndex, depth):
+            move = 'Stop'
+            moves = gameState.getLegalActions(self.index)
+            if depth >= self.depth or gameState.isWin() or not moves:
+                return self.evaluationFunction(gameState), Directions.STOP
+            best_value = -1000000
+            for action in moves:
+                succesor = gameState.generateSuccessor(self.index, action)
+                alpha, __ = minValue(succesor, agentIndex + 1, depth)
+                if not best_value:
+                    best_value = alpha
                     move = action
-        return move
+                else:
+                    if alpha > best_value:
+                        best_value = alpha
+                        move = action
+            return best_value, move
+
+        def minValue(gameState, agentIndex, depth):
+            move = 'Stop'
+            moves = gameState.getLegalActions(agentIndex)
+            if depth >= self.depth or gameState.isLose() or not moves:
+                return self.evaluationFunction(gameState), Directions.STOP
+            best_value = 1000000
+            for action in moves:
+                succesor = gameState.generateSuccessor(agentIndex, action)
+                if agentIndex == gameState.getNumAgents() -1:
+                    beta, __ = maxValue(succesor, self.index, depth +1)
+                else:
+                    beta, __ = minValue(succesor, agentIndex + 1, depth)
+
+                if beta < best_value:
+                    best_value = beta
+                    move = action
+            return best_value, move
+        return maxValue(gameState, self.index, 0)[1]
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
