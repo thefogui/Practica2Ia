@@ -297,8 +297,8 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             move = 'Stop'
             moves = gameState.getLegalActions(agentIndex)
             if depth >= self.depth or gameState.isLose() or not moves:
-                return self.evaluationFunction(gameState), Directions.STOP
-            best_value = 1000000
+                return self.evaluationFunction(gameState), None
+            cost = []
             for action in moves:
                 succesor = gameState.generateSuccessor(agentIndex, action)
                 if agentIndex == gameState.getNumAgents() -1:
@@ -306,10 +306,8 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                 else:
                     beta, __ = minValue(succesor, agentIndex + 1, depth)
 
-                if beta < best_value:
-                    best_value = beta
-                    move = action
-            return best_value, move
+                cost.append(beta)
+            return sum(cost)/float(len(cost)), None
         return maxValue(gameState, self.index, 0)[1]
 
 def betterEvaluationFunction(currentGameState):
