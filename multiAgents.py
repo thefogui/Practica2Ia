@@ -11,7 +11,11 @@
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
-
+####
+####
+#### Practica 2 IA
+#### @AUTHOR Vitor Carvalho
+####
 
 from util import manhattanDistance
 from game import Directions
@@ -76,14 +80,14 @@ class ReflexAgent(Agent):
 
         "*** YOUR CODE HERE ***"
         penalty = 10.0
-        score = successorGameState.getScore()
+        score = successorGameState.getScore() #actual score
 
         min_distance_ghost = None
         min_distance_food = None
         infinito = -10000000
-        if action == 'Stop':
+        if action == Directions.STOP: #this make the pacman never stop
             return infinito
-        elif successorGameState.isWin():
+        elif successorGameState.isWin(): #end the game if is a win
             return 1000000
 
         """
@@ -113,11 +117,12 @@ class ReflexAgent(Agent):
                 if min_distance_food < distance_food:
                     min_distance_food = distance_food
 
+        #reduces or sum the score with the ghost and food ditance
         if score:
             if min_distance_ghost:
-                score -= penalty / min_distance_ghost
+                score = score - (penalty / min_distance_ghost)
             if min_distance_food:
-                score += penalty / min_distance_food
+                score = score + (penalty / min_distance_food)
 
         return score
 
@@ -174,12 +179,9 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-
-        #util.raiseNotDefined()
-
         def maxValue(gameState, agentIndex, depth):
             #if we don't find any move we just stop
-            move = 'Stop'
+            move = Directions.STOP
             #list of posibles moves
             #self.index == 0 => pacman
             moves = gameState.getLegalActions(self.index)
@@ -200,7 +202,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return best_value, move
 
         def minValue(gameState, agentIndex, depth):
-            move = 'Stop'
+            move = Directions.STOP
             moves = gameState.getLegalActions(agentIndex)
             if depth >= self.depth or gameState.isLose() or not moves:
                 return self.evaluationFunction(gameState), Directions.STOP
@@ -250,7 +252,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             return best_value, move
 
         def minValue(gameState, agentIndex, depth, alpha_pruning, beta_pruning):
-            move = 'Stop'
+            move = Directions.STOP
             moves = gameState.getLegalActions(agentIndex)
             if depth >= self.depth or gameState.isLose() or not moves:
                 return self.evaluationFunction(gameState), Directions.STOP
@@ -260,7 +262,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 if agentIndex == gameState.getNumAgents() -1:
                     beta, __ = maxValue(succesor, self.index, depth +1, alpha_pruning, beta_pruning)
                 else:
-                    beta, __ = minValue(succesor, agentIndex + 1, depth,alpha_pruning, beta_pruning)
+                    beta, __ = minValue(succesor, agentIndex + 1, depth, alpha_pruning, beta_pruning)
 
                 if beta < best_value:
                     best_value = beta
@@ -287,7 +289,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         def maxValue(gameState, agentIndex, depth):
-            move = 'Stop'
+            move = Directions.STOP
             moves = gameState.getLegalActions(self.index)
             if depth >= self.depth or gameState.isWin() or not moves:
                 return self.evaluationFunction(gameState), Directions.STOP
@@ -302,7 +304,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             return best_value, move
 
         def minValue(gameState, agentIndex, depth):
-            move = 'Stop'
+            move = Directions.STOP
             moves = gameState.getLegalActions(agentIndex)
             if depth >= self.depth or gameState.isLose() or not moves:
                 return self.evaluationFunction(gameState), None
@@ -326,7 +328,43 @@ def betterEvaluationFunction(currentGameState):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    newPos = currentGameState.getPacmanPosition()
+    newFood = currentGameState.getFood()
+    newGhostStates = currentGameState.getGhostStates()
 
+    penalty = 10.0
+    ghost_scared = 100.0
+    min_distance_food = None
+
+    score = currentGameState.getScore()
+
+    if currentGameState.isWin(): #end the game if is a win
+        return 1000000
+
+    ghost_score = 0
+    for ghost in newGhostStates:
+        distance_ghost = manhattanDistance(newPos, ghost.getPosition())
+        if distance_ghost > 0:
+            if ghost.scaredTimer > 0: #if the ghost it is scared we go for him
+                ghost_score = ghost_score + (ghost_score / distance_ghost)
+            else: #if he is not scared we reduce the penalty
+                ghost_score = ghost_score - (penalty / distance_ghost)
+
+    #search the nearest food and sum the division of the penalty wirh it to the actual score
+    for food in newFood.asList():
+        distance_food = manhattanDistance(newPos, food)
+        if min_distance_food == None:
+            min_distance_food = distance_food
+        else:
+            if min_distance_food < distance_food:
+                min_distance_food = distance_food
+
+    if score:
+        if ghost_score:
+            score = score + ghost_score
+        if min_distance_food:
+            score = score + penalty / min_distance_food
+
+    return score
 # Abbreviation
 better = betterEvaluationFunction
